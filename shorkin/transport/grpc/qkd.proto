@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package shorkin.qkd;
+
+// QKD Key Exchange service for the classical channel portion
+// of quantum key distribution over gRPC.
+service QKDKeyExchange {
+    // Initiate a new QKD key exchange session
+    rpc Initiate(KeyExchangeInitRequest) returns (KeyExchangeInitResponse);
+
+    // Query the status of a QKD session
+    rpc GetStatus(SessionStatusRequest) returns (SessionStatusResponse);
+}
+
+message KeyExchangeInitRequest {
+    string session_id = 1;
+    string protocol = 2;    // "bb84", "b92", "e91"
+    int32 num_qubits = 3;
+    int32 target_key_bits = 4;
+    string peer_id = 5;
+}
+
+message KeyExchangeInitResponse {
+    string session_id = 1;
+    string key_hash = 2;     // SHA-256 hash of derived key (for verification)
+    string status = 3;       // "ok" or "error"
+    string error_message = 4;
+}
+
+message SessionStatusRequest {
+    string session_id = 1;
+}
+
+message SessionStatusResponse {
+    string session_id = 1;
+    string status = 2;       // "active", "expired", "aborted", etc.
+    string protocol = 3;
+}
