@@ -169,6 +169,7 @@ def grover(
     num_marked: int = 1,
     iterations: int | None = None,
     repetitions: int = 1,
+    seed: int | None = None,
     verbose_callback: Callable[[str], None] | None = None,
 ) -> GroverResult:
     """Search for marked items using Grover's algorithm.
@@ -183,6 +184,7 @@ def grover(
         iterations: Number of Grover iterations. If None, uses the optimal
             count: floor(pi/4 * sqrt(2^n / num_marked)).
         repetitions: Number of times to run the circuit.
+        seed: Random seed for the simulator (enables reproducible results).
         verbose_callback: Optional callback(message: str) for verbose output.
 
     Returns:
@@ -208,7 +210,7 @@ def grover(
     if verbose_callback:
         verbose_callback(f"Circuit:\n{circuit}")
 
-    simulator = cirq.Simulator()
+    simulator = cirq.Simulator(seed=seed)
     result = simulator.run(circuit, repetitions=repetitions)
     measurements = result.measurements["result"]
 

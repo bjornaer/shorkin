@@ -1,6 +1,6 @@
 # Shorkin
 
-A quantum cryptography toolkit for Python. Implements **Shor's algorithm** for integer factorization and **Quantum Key Distribution (QKD)** protocols with HTTP and gRPC transport integrations.
+A quantum computing toolkit for Python. Implements **Shor's algorithm** for integer factorization, **Deutsch-Jozsa** for constant/balanced classification, **Grover's algorithm** for unstructured search, **quantum teleportation**, and **Quantum Key Distribution (QKD)** protocols with HTTP and gRPC transport integrations.
 
 Quantum simulation is powered by [Google Cirq](https://quantumai.google/cirq). QKD-derived keys are used for AES-256-GCM payload encryption.
 
@@ -57,6 +57,85 @@ class ClassicalFinder:
 
 result = factor(15, ClassicalFinder())
 print(result.factors)  # [3, 5]
+```
+
+## Deutsch-Jozsa Algorithm
+
+Determine whether a Boolean function f: {0,1}^n -> {0,1} is constant or balanced with a single quantum query (classically requires up to 2^(n-1)+1 evaluations).
+
+```python
+from shorkin.deutsch_jozsa import deutsch_jozsa
+
+# Constant function (always returns 1)
+result = deutsch_jozsa(lambda x: 1, n=3)
+print(result.function_type)  # "constant"
+print(result.is_constant)    # True
+
+# Balanced function (returns 1 for odd inputs)
+result = deutsch_jozsa(lambda x: x % 2, n=3)
+print(result.function_type)  # "balanced"
+print(result.is_balanced)    # True
+```
+
+## Grover's Algorithm
+
+Search an unstructured space of 2^n items in O(sqrt(N)) oracle queries (vs O(N) classically).
+
+```python
+from shorkin.grover import grover
+
+# Find item 5 in a space of 8
+result = grover(lambda x: int(x == 5), n=3)
+print(result.found)            # 5
+print(result.search_space_size)  # 8
+
+# Multiple marked items
+marked = {3, 5}
+result = grover(lambda x: int(x in marked), n=3, num_marked=2)
+print(result.found)  # 3 or 5
+
+# Reproducible results with a seed
+result = grover(lambda x: int(x == 5), n=3, seed=42)
+```
+
+## Quantum Teleportation
+
+Transfer an arbitrary single-qubit state using a shared Bell pair and two classical bits.
+
+```python
+import math
+from shorkin.teleportation import teleport
+
+# Teleport |1> state (theta=pi)
+result = teleport(theta=math.pi)
+print(result.fidelity)     # ~1.0
+print(result.success)      # True
+print(result.alice_bits)   # (0, 0), (0, 1), (1, 0), or (1, 1)
+
+# Teleport |+> state (theta=pi/2)
+result = teleport(theta=math.pi / 2)
+print(result.fidelity)     # ~1.0
+```
+
+## Quantum Gates
+
+Convenience wrappers around Cirq gates with a fluent `GateChain` builder.
+
+```python
+import cirq
+from shorkin.gates import H, CNOT, rotate_x, GateChain
+
+q0, q1 = cirq.LineQubit.range(2)
+
+# Gate aliases
+circuit = cirq.Circuit()
+circuit.append(H(q0))
+circuit.append(CNOT(q0, q1))
+
+# Fluent chaining
+import math
+chain = GateChain().h(q0).cnot(q0, q1).rz(q1, math.pi / 4)
+circuit.append(chain.operations)
 ```
 
 ## QKD Protocols
@@ -298,6 +377,10 @@ shorkin/
     classical/          # Classical order finding (brute-force)
     quantum/            # Quantum order finding (Cirq QPE)
     factor.py           # Shor's algorithm orchestration
+    deutsch_jozsa.py    # Deutsch-Jozsa algorithm
+    grover.py           # Grover's search algorithm
+    teleportation.py    # Quantum teleportation protocol
+    gates.py            # Gate aliases, helpers, and GateChain builder
     cli.py              # CLI entry point
     qkd/                # QKD protocol engines
         bb84.py         # BB84 protocol
